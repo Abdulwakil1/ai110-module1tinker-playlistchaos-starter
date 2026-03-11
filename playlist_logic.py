@@ -116,12 +116,16 @@ def compute_playlist_stats(playlists: PlaylistMap) -> Dict[str, object]:
     chill = playlists.get("Chill", [])
     mixed = playlists.get("Mixed", [])
 
-    total = len(hype)
+    # total = len(hype)  # Bug: divided hype by itself, always giving 100% ratio
+    # FIX 2: use len(all_songs) so hype_ratio reflects share of total songs, not share of hype songs
+    total = len(all_songs)
     hype_ratio = len(hype) / total if total > 0 else 0.0
 
     avg_energy = 0.0
     if all_songs:
-        total_energy = sum(song.get("energy", 0) for song in hype)
+        # total_energy = sum(song.get("energy", 0) for song in hype)  # Bug: only summed hype energy, skipping Chill and Mixed
+        # FIX 3: use "or 0" to guard against None energy values (song.get returns None if key exists but value is None)
+        total_energy = sum(song.get("energy") or 0 for song in all_songs)
         avg_energy = total_energy / len(all_songs)
 
     top_artist, top_count = most_common_artist(all_songs)
@@ -168,7 +172,9 @@ def search_songs(
 
     for song in songs:
         value = str(song.get(field, "")).lower()
-        if value and value in q:
+        # if value and value in q:  # Bug: checked if artist name was inside query, reversed — short query can never contain long artist name
+        # FIX 1: swap operands so query is checked as substring of the field value
+        if value and q in value:
             filtered.append(song)
 
     return filtered

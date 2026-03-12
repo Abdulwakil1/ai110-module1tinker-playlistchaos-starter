@@ -108,37 +108,44 @@ def merge_playlists(a: PlaylistMap, b: PlaylistMap) -> PlaylistMap:
 
 def compute_playlist_stats(playlists: PlaylistMap) -> Dict[str, object]:
     """Compute statistics across all playlists."""
+    # Collect all songs from all playlists
     all_songs: List[Song] = []
     for songs in playlists.values():
         all_songs.extend(songs)
 
-    hype = playlists.get("Hype", [])
-    chill = playlists.get("Chill", [])
-    mixed = playlists.get("Mixed", [])
+    # Get individual playlist lists
+    hype_songs = playlists.get("Hype", [])
+    chill_songs = playlists.get("Chill", [])
+    mixed_songs = playlists.get("Mixed", [])
 
-    # total = len(hype)  # Bug: divided hype by itself, always giving 100% ratio
-    # FIX 2: use len(all_songs) so hype_ratio reflects share of total songs, not share of hype songs
+    # Compute basic counts
+    total_songs_count = len(all_songs)
+    hype_count = len(hype_songs)
+    chill_count = len(chill_songs)
+    mixed_count = len(mixed_songs)
+
+    # Compute hype ratio (fraction of total songs that are hype)
     total = len(all_songs)
-    hype_ratio = len(hype) / total if total > 0 else 0.0
+    hype_ratio = len(hype_songs) / total if total > 0 else 0.0
 
+    # Compute average energy across all songs
     avg_energy = 0.0
-    if all_songs:
-        # total_energy = sum(song.get("energy", 0) for song in hype)  # Bug: only summed hype energy, skipping Chill and Mixed
-        # FIX 3: use "or 0" to guard against None energy values (song.get returns None if key exists but value is None)
+    if total_songs_count > 0:
         total_energy = sum(song.get("energy") or 0 for song in all_songs)
-        avg_energy = total_energy / len(all_songs)
+        avg_energy = total_energy / total_songs_count
 
-    top_artist, top_count = most_common_artist(all_songs)
+    # Find the most common artist
+    top_artist, top_artist_count = most_common_artist(all_songs)
 
     return {
-        "total_songs": len(all_songs),
-        "hype_count": len(hype),
-        "chill_count": len(chill),
-        "mixed_count": len(mixed),
+        "total_songs": total_songs_count,
+        "hype_count": hype_count,
+        "chill_count": chill_count,
+        "mixed_count": mixed_count,
         "hype_ratio": hype_ratio,
         "avg_energy": avg_energy,
         "top_artist": top_artist,
-        "top_artist_count": top_count,
+        "top_artist_count": top_artist_count,
     }
 
 
@@ -172,8 +179,6 @@ def search_songs(
 
     for song in songs:
         value = str(song.get(field, "")).lower()
-        # if value and value in q:  # Bug: checked if artist name was inside query, reversed — short query can never contain long artist name
-        # FIX 1: swap operands so query is checked as substring of the field value
         if value and q in value:
             filtered.append(song)
 

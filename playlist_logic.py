@@ -125,8 +125,7 @@ def compute_playlist_stats(playlists: PlaylistMap) -> Dict[str, object]:
     mixed_count = len(mixed_songs)
 
     # Compute hype ratio (fraction of total songs that are hype)
-    total = len(all_songs)
-    hype_ratio = len(hype_songs) / total if total > 0 else 0.0
+    hype_ratio = len(hype_songs) / total_songs_count if total_songs_count > 0 else 0.0
 
     # Compute average energy across all songs
     avg_energy = 0.0
